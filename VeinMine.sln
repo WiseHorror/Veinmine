@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31025.194
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeinMine", "VeinMine\VeinMine.csproj", "{B89BA476-237B-4A9B-837D-C6D07174918D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B89BA476-237B-4A9B-837D-C6D07174918D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B89BA476-237B-4A9B-837D-C6D07174918D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B89BA476-237B-4A9B-837D-C6D07174918D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B89BA476-237B-4A9B-837D-C6D07174918D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4EABDFA4-C79C-4BD9-899D-018577A999B6}
+	EndGlobalSection
+EndGlobal
