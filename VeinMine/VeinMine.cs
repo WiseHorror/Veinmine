@@ -30,9 +30,6 @@ namespace WiseHorror.VeinMine
 
         void Awake()
         {
-            Harmony harmony = new Harmony(MOD_ID);
-            harmony.PatchAll();
-
             veinMineKey = Config.Bind("General",
                 "Veinmine",
                 KeyCode.LeftAlt,
@@ -83,6 +80,8 @@ namespace WiseHorror.VeinMine
                 "Keep in mind that if you mine veins with a large amount of sections (such as copper) you might do almost no damage." +
                 "Distance: Calculates damage done to each section depending on your distance from it, the farther away, the less damage you do.");
 
+            Harmony harmony = new Harmony(MOD_ID);
+            harmony.PatchAll();
         }
 
         private static ConfigEntry<KeyCode> veinMineKey;

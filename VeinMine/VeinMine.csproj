@@ -48,9 +48,6 @@
     <Reference Include="BepInEx">
       <HintPath>..\..\MultiSmelt\MultiSmelt\Libs\BepInEx.dll</HintPath>
     </Reference>
-    <Reference Include="Mono.Posix">
-      <HintPath>..\..\..\..\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Bunch of mods\unstripped_corlib\Mono.Posix.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -62,15 +59,6 @@
     <Reference Include="UnityEngine">
       <HintPath>..\..\SmeltingSkill\SmeltingSkill\Libs\UnityEngine.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.AnimationModule">
-      <HintPath>D:\Games\Steam\steamapps\common\Valheim\unstripped_corlib\UnityEngine.AnimationModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.AssetBundleModule">
-      <HintPath>D:\Games\Steam\steamapps\common\Valheim\unstripped_corlib\UnityEngine.AssetBundleModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.AudioModule">
-      <HintPath>D:\Games\Steam\steamapps\common\Valheim\unstripped_corlib\UnityEngine.AudioModule.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\MultiSmelt\MultiSmelt\Libs\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
@@ -80,20 +68,11 @@
     <Reference Include="UnityEngine.InputLegacyModule">
       <HintPath>D:\Games\Steam\steamapps\common\Valheim\unstripped_corlib\UnityEngine.InputLegacyModule.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.ParticleSystemModule">
-      <HintPath>D:\Games\Steam\steamapps\common\Valheim\unstripped_corlib\UnityEngine.ParticleSystemModule.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>D:\Games\Steam\steamapps\common\Valheim\unstripped_corlib\UnityEngine.PhysicsModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>D:\Games\Steam\steamapps\common\Valheim\unstripped_corlib\UnityEngine.UI.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UIModule">
-      <HintPath>D:\Games\Steam\steamapps\common\Valheim\unstripped_corlib\UnityEngine.UIModule.dll</HintPath>
-    </Reference>
-    <Reference Include="ValheimLib">
-      <HintPath>..\..\..\..\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Bunch of mods\BepInEx\plugins\ValheimModding-ValheimLib\ValheimLib\ValheimLib.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
