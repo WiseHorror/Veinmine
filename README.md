@@ -4,7 +4,10 @@
 Make sure to reference unstripped/publicized DLLs when building.
 
 # Changelog
-## 1.1.9
+## 1.2.0
+ - Replaced 'Even' spread damage option with 'Level' as even was useless when the mined vein had a large number of sections.
+ - Refactored code. 
+### 1.1.9
  - Fixed incompatibility with Rocky Ore mod.
 ### 1.1.8
  - Fixed a bug that was causing no ores to be dropped (hopefully)
