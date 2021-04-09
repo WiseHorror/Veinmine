@@ -76,7 +76,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Patches.cs" />
     <Compile Include="VeinMine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
