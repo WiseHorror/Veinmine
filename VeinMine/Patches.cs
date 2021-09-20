@@ -12,6 +12,7 @@ namespace WiseHorror.Veinmine
         [HarmonyPatch(typeof(MineRock), "Damage")]
         public static void MineRock_Damage_Prefix(MineRock __instance, HitData hit)
         {
+            if (!VeinMine.progressiveMode.Value) hit.m_damage.m_pickaxe = __instance.m_health + 10;
             hit.m_point = __instance.GetHitArea(__instance.GetAreaIndex(hit.m_hitCollider)).bounds.center;
         }
 
@@ -38,26 +39,6 @@ namespace WiseHorror.Veinmine
                     }
                 }
             }
-            if (Input.GetKey(VeinMine.veinMineKey.Value) && !VeinMine.progressiveMode.Value)
-            {
-                List<Collider> radiusColliders = new List<Collider>();
-                foreach(var area in __instance.m_hitAreas)
-                {
-                    radiusColliders.Add(area.m_collider);
-                }
-
-                if (radiusColliders != null)
-                {
-                    foreach (var area in radiusColliders)
-                    {
-                        if (__instance.GetAreaIndex(area) >= 0)
-                        {
-                            __state.Add(__instance.GetAreaIndex(area), __instance.GetHitArea(__instance.GetAreaIndex(area)).m_bound.m_pos +
-                                __instance.GetHitArea(__instance.GetAreaIndex(area)).m_collider.transform.position);
-                        }
-                    }
-                }
-            }
         }
 
         [HarmonyPostfix]
@@ -66,7 +47,30 @@ namespace WiseHorror.Veinmine
         {
             if (Player.m_localPlayer != null && hit.m_attacker == Player.m_localPlayer.GetZDOID())
             {
-                if (Input.GetKey(VeinMine.veinMineKey.Value))
+                if (Input.GetKey(VeinMine.veinMineKey.Value) && !VeinMine.progressiveMode.Value)
+                {
+                    for (int i = 0; i < (___m_hitAreas.Count <= 128 ? ___m_hitAreas.Count : 128); i++)
+                    {
+                        if (Player.m_localPlayer.GetCurrentWeapon().m_durability > 0 || !Player.m_localPlayer.GetCurrentWeapon().m_shared.m_useDurability)
+                        {
+                            hit.m_point = __instance.GetHitArea(i).m_bound.m_pos;
+                            hit.m_damage.m_pickaxe = __instance.m_health + 10;
+                            try
+                            {
+                                ___m_nview.InvokeRPC("Damage", new object[]
+                                {
+                                                hit,
+                                                i
+                                });
+                            }
+                            catch
+                            {
+                                VeinMine.logger.LogInfo("Skipping section: " + i + ".");
+                            }
+                        }
+                    }
+                }
+                else if (Input.GetKey(VeinMine.veinMineKey.Value) && VeinMine.progressiveMode.Value)
                 {
                     foreach (var index in __state)
                     {
@@ -95,7 +99,6 @@ namespace WiseHorror.Veinmine
         [HarmonyPatch(typeof(MineRock5), "DamageArea")]
         public static bool MineRock5_DamageArea_Prefix(MineRock5 __instance, HitData hit, int hitAreaIndex, ref EffectList ___m_destroyedEffect, ref EffectList ___m_hitEffect, out float __state, ref bool __result)
         {
-            if (!VeinMine.progressiveMode.Value) hit.m_damage.m_pickaxe = __instance.m_health;
             bool isVeinmined = false;
             MineRock5.HitArea hitArea = __instance.GetHitArea(hitAreaIndex);
             __state = hitArea.m_health;
@@ -134,7 +137,7 @@ namespace WiseHorror.Veinmine
             }
             hitArea.m_health -= totalDamage;
             __instance.SaveHealth();
-            if (!VeinMine.removeEffects.Value) __instance.m_hitEffect.Create(hit.m_point, Quaternion.identity, null, 1f, -1);
+            if (!VeinMine.removeEffects.Value) __instance.m_hitEffect.Create(hit.m_point, Quaternion.identity, null, 1f);
             Player closestPlayer = Player.GetClosestPlayer(hit.m_point, 10f);
             if (closestPlayer)
             {
@@ -147,14 +150,14 @@ namespace WiseHorror.Veinmine
             hitAreaIndex,
             hitArea.m_health
                 });
-                if (!VeinMine.removeEffects.Value) __instance.m_destroyedEffect.Create(hit.m_point, Quaternion.identity, null, 1f, -1);
+                if (!VeinMine.removeEffects.Value) __instance.m_destroyedEffect.Create(hit.m_point, Quaternion.identity, null, 1f);
                 foreach (GameObject gameObject in __instance.m_dropItems.GetDropList())
                 {
                     if (isVeinmined)
                     {
-                        Vector3 position = closestPlayer.GetTransform().localPosition + new Vector3 { x = 0, y = 2, z = 0 } + UnityEngine.Random.insideUnitSphere * 0.3f;
+                        Vector3 position = Player.m_localPlayer.GetTransform().position + new Vector3 { x = 0, y = 2, z = 0 } + UnityEngine.Random.insideUnitSphere * 0.3f;
                         UnityEngine.Object.Instantiate<GameObject>(gameObject, position, Quaternion.identity);
-                        hit.m_point = closestPlayer.GetTransform().localPosition + new Vector3 { x = 0, y = 2, z = 0 };
+                        hit.m_point = Player.m_localPlayer.GetTransform().position + new Vector3 { x = 0, y = 2, z = 0 };
                     }
                     else if (!isVeinmined)
                     {
