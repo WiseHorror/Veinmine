@@ -66,7 +66,7 @@ namespace WiseHorror.Veinmine
         {
             if (Player.m_localPlayer != null && hit.m_attacker == Player.m_localPlayer.GetZDOID())
             {
-                if (Input.GetKey(VeinMine.veinMineKey.Value))
+                if (Input.GetKey(VeinMine.veinMineKey.Value) && Player.m_localPlayer.GetCurrentWeapon().GetDamage().m_pickaxe > 0)
                 {
                     foreach (var index in __state)
                     {
@@ -95,7 +95,7 @@ namespace WiseHorror.Veinmine
         [HarmonyPatch(typeof(MineRock5), "DamageArea")]
         public static bool MineRock5_DamageArea_Prefix(MineRock5 __instance, HitData hit, int hitAreaIndex, ref EffectList ___m_destroyedEffect, ref EffectList ___m_hitEffect, out float __state, ref bool __result)
         {
-            if (!VeinMine.progressiveMode.Value) hit.m_damage.m_pickaxe = __instance.m_health;
+            if (!VeinMine.progressiveMode.Value && Player.GetClosestPlayer(hit.m_point, 10f).GetCurrentWeapon().GetDamage().m_pickaxe > 0f) hit.m_damage.m_pickaxe = __instance.m_health;
             bool isVeinmined = false;
             MineRock5.HitArea hitArea = __instance.GetHitArea(hitAreaIndex);
             __state = hitArea.m_health;
@@ -178,7 +178,7 @@ namespace WiseHorror.Veinmine
         [HarmonyPatch(typeof(MineRock5), "DamageArea")]
         public static void MineRock5_DamageArea_Patch(MineRock5 __instance, HitData hit, float __state, bool __result)
         {
-            if (Input.GetKey(VeinMine.veinMineKey.Value))
+            if (Input.GetKey(VeinMine.veinMineKey.Value) && Player.m_localPlayer.GetCurrentWeapon().GetDamage().m_pickaxe > 0)
             {
                 if (__state > 0f && hit.m_attacker == Player.m_localPlayer.GetZDOID() && !VeinMine.progressiveMode.Value)
                 {

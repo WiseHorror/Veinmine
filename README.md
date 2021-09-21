@@ -19,7 +19,9 @@ What does 2 mean, you ask?
   
 It's simple! A standard 2x2 floor piece has a length of 2, exactly like its name suggests.
 # Changelog
-## 1.2.2
+## 1.2.3
+ - Fixed a bug that allowed players to veinmine (and gain exp) without a pickaxe.
+### 1.2.2
  - Possible fix for ore drop quantities (Not sure why they weren't correct, as I don't change drop rates)
 ### 1.2.1
  - Compatibility for Hearth and Home;
