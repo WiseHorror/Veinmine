@@ -1,8 +1,7 @@
 ﻿![enter image description here](https://i.imgur.com/OAfRGXK.jpg)
 Tired of mining for ages?  
-With VeinMine you're able to mine the whole ore/rock vein at once!  
+With Veinmine you're able to mine the whole ore/rock vein at once!  
 You can do this by holding down the assigned key (Left Alt by default) while mining!
-This mod does essentially the same thing as [SeleniumMineBoom](https://valheim.thunderstore.io/package/SeleniumCoreTeam/SeleniumMineBoom/)﻿ but lets you configure a key, so you don't always mine a whole vein at once if you don't want to.
 
 ## **Version 1.0.0 - Progressive mode added!**
 
@@ -20,7 +19,9 @@ What does 2 mean, you ask?
   
 It's simple! A standard 2x2 floor piece has a length of 2, exactly like its name suggests.
 # Changelog
-## 1.2.1
+## 1.2.2
+ - Possible fix for ore drop quantities (Not sure why they weren't correct, as I don't change drop rates)
+### 1.2.1
  - Compatibility for Hearth and Home;
  - Tentative fix for ores spawning at 0,0 (unable to test without other players)
 ### 1.2.0

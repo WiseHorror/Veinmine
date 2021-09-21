@@ -70,7 +70,7 @@ namespace WiseHorror.Veinmine
                 {
                     foreach (var index in __state)
                     {
-                        hit.m_point = index.Value;
+                        //hit.m_point = index.Value;
                         if (Player.m_localPlayer.GetCurrentWeapon().m_durability > 0 || !Player.m_localPlayer.GetCurrentWeapon().m_shared.m_useDurability)
                         {
                             try
@@ -152,9 +152,10 @@ namespace WiseHorror.Veinmine
                 {
                     if (isVeinmined)
                     {
-                        Vector3 position = closestPlayer.GetTransform().localPosition + new Vector3 { x = 0, y = 2, z = 0 } + UnityEngine.Random.insideUnitSphere * 0.3f;
+                        Vector3 position = hit.m_point + UnityEngine.Random.insideUnitSphere * 0.3f;
+                        //Vector3 position = closestPlayer.GetTransform().localPosition + new Vector3 { x = 0, y = 2, z = 0 } + UnityEngine.Random.insideUnitSphere * 0.3f;
                         UnityEngine.Object.Instantiate<GameObject>(gameObject, position, Quaternion.identity);
-                        hit.m_point = closestPlayer.GetTransform().localPosition + new Vector3 { x = 0, y = 2, z = 0 };
+                        //hit.m_point = closestPlayer.GetTransform().localPosition + new Vector3 { x = 0, y = 2, z = 0 };
                     }
                     else if (!isVeinmined)
                     {
