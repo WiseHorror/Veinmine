@@ -14,7 +14,7 @@ namespace WiseHorror.Veinmine
     {
         private const string MOD_ID = "com.wisehorror.Veinmine";
         private const string MOD_NAME = "Veinmine";
-        private const string VERSION = "1.2.3";
+        private const string VERSION = "1.2.4";
 
         public static ManualLogSource logger = BepInEx.Logging.Logger.CreateLogSource("Veinmine");
 

@@ -10,9 +10,72 @@ namespace WiseHorror.Veinmine
     {
         [HarmonyPrefix]
         [HarmonyPatch(typeof(MineRock), "Damage")]
-        public static void MineRock_Damage_Prefix(MineRock __instance, HitData hit)
+        public static bool MineRock_Damage_Prefix(MineRock __instance, HitData hit)
         {
-            hit.m_point = __instance.GetHitArea(__instance.GetAreaIndex(hit.m_hitCollider)).bounds.center;
+            if (Input.GetKey(VeinMine.veinMineKey.Value))
+            {
+                if (VeinMine.progressiveMode.Value)
+                {
+                    float radius = VeinMine.progressiveMult.Value * (float)GetSkillLevel(Player.m_localPlayer.GetSkills(), Skills.SkillType.Pickaxes);
+                    Vector3 firstHitPoint = hit.m_point;
+
+                    foreach (var area in __instance.m_hitAreas)
+                    {
+                        if (GetDistanceFromPlayer(Player.GetClosestPlayer(hit.m_point, 5f).GetTransform().position, area.bounds.center) <= radius && area != null)
+                        {
+                            hit.m_point = area.transform.position;
+                            hit.m_hitCollider = area;
+                            if (hit.m_hitCollider == null)
+                            {
+                                ZLog.Log("Minerock hit has no collider");
+                                return false;
+                            }
+                            int areaIndex = __instance.GetAreaIndex(hit.m_hitCollider);
+                            if (areaIndex == -1)
+                            {
+                                //ZLog.Log("Invalid hit area on " + base.gameObject.name);
+                                return false;
+                            }
+                            ZLog.Log("Hit mine rock area " + areaIndex);
+                            __instance.m_nview.InvokeRPC("Hit", new object[]
+                            {
+                            hit,
+                            areaIndex
+                            });
+                            hit.m_point = firstHitPoint;
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (var area in __instance.m_hitAreas)
+                    {
+                        string hpAreaName = "Health" + __instance.GetAreaIndex(area).ToString();
+                        hit.m_damage.m_pickaxe = __instance.m_nview.GetZDO().GetFloat(hpAreaName, __instance.m_health);
+                        hit.m_point = __instance.GetHitArea(__instance.GetAreaIndex(area)).bounds.center;
+                        hit.m_hitCollider = area;
+                        if (hit.m_hitCollider == null)
+                        {
+                            ZLog.Log("Minerock hit has no collider");
+                            return false;
+                        }
+                        int areaIndex = __instance.GetAreaIndex(hit.m_hitCollider);
+                        if (areaIndex == -1)
+                        {
+                            //ZLog.Log("Invalid hit area on " + base.gameObject.name);
+                            return false;
+                        }
+                        ZLog.Log("Hit mine rock area " + areaIndex);
+                        __instance.m_nview.InvokeRPC("Hit", new object[]
+                        {
+                            hit,
+                            areaIndex
+                        });
+                    }
+                }
+                return false;
+            }
+            return true;
         }
 
         [HarmonyPrefix]
@@ -220,6 +283,10 @@ namespace WiseHorror.Veinmine
             if (playerSkills != null) return playerSkills.GetSkill(skillType).m_level;
 
             return 1;
+        }
+        public static float GetDistanceFromPlayer(Vector3 playerPos, Vector3 colliderPos)
+        {
+            return Vector3.Distance(playerPos, colliderPos);
         }
 
         public static HitData SpreadDamage(HitData hit)

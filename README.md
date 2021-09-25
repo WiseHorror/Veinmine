@@ -19,7 +19,10 @@ What does 2 mean, you ask?
   
 It's simple! A standard 2x2 floor piece has a length of 2, exactly like its name suggests.
 # Changelog
-## 1.2.3
+## 1.2.4
+ - Fixed an exception that was thrown when mining Leviathans.
+ - Added veinmining support for Leviathans and Glowing Metal (Flametal Ore).
+### 1.2.3
  - Fixed a bug that allowed players to veinmine (and gain exp) without a pickaxe.
 ### 1.2.2
  - Possible fix for ore drop quantities (Not sure why they weren't correct, as I don't change drop rates)
