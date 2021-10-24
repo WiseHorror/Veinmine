@@ -19,7 +19,9 @@ What does 2 mean, you ask?
   
 It's simple! A standard 2x2 floor piece has a length of 2, exactly like its name suggests.
 # Changelog
-## 1.2.4
+## 1.2.5
+ - Tentative fix for multiplayer veinmining by replacing the use of Player.m_localPlayer with Player.GetClosestPlayer.
+### 1.2.4
  - Fixed an exception that was thrown when mining Leviathans.
  - Added veinmining support for Leviathans and Glowing Metal (Flametal Ore).
 ### 1.2.3
