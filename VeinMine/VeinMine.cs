@@ -14,7 +14,7 @@ namespace WiseHorror.Veinmine
     {
         private const string MOD_ID = "com.wisehorror.Veinmine";
         private const string MOD_NAME = "Veinmine";
-        private const string VERSION = "1.2.6";
+        private const string VERSION = "1.2.7";
 
         public static ManualLogSource logger = BepInEx.Logging.Logger.CreateLogSource("Veinmine");
 
@@ -34,7 +34,7 @@ namespace WiseHorror.Veinmine
             veinMineDurability = Config.Bind("General",
                 "Durability",
                 true,
-                "Veinmining takes durability as if you mined every section manually.\nDoesn't do anything in Progressive mode, as durability is always removed there.");
+                "Veinmining takes durability as if you mined every section manually.");
 
             removeEffects = Config.Bind("Visual",
                 "Remove Effects",

@@ -286,7 +286,7 @@ namespace WiseHorror.Veinmine
                     {
                         Player.GetClosestPlayer(hit.m_point, 5f).RaiseSkill(Skills.SkillType.Pickaxes, Functions.GetSkillIncreaseStep(Player.GetClosestPlayer(hit.m_point, 5f).GetSkills(), Skills.SkillType.Pickaxes) * VeinMine.xpMult.Value);
 
-                        if (Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon().m_shared.m_useDurability)
+                        if (VeinMine.veinMineDurability.Value && Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon().m_shared.m_useDurability)
                         {
                             float durabilityLoss = Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon().m_shared.m_useDurabilityDrain * ((120 - Functions.GetSkillLevel(Player.GetClosestPlayer(hit.m_point, 5f).GetSkills(), Skills.SkillType.Pickaxes)) / (20 * VeinMine.durabilityMult.Value));
                             Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon().m_durability -= durabilityLoss;
