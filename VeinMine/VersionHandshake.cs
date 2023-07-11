@@ -1,0 +1,124 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
+using HarmonyLib;
+
+namespace Veinmine
+{
+    [HarmonyPatch(typeof(ZNet), nameof(ZNet.OnNewConnection))]
+    public static class RegisterAndCheckVersion
+    {
+        private static void Prefix(ZNetPeer peer, ref ZNet __instance)
+        {
+            // Register version check call
+            VeinMinePlugin.logger.LogDebug("Registering version RPC handler");
+            peer.m_rpc.Register($"{VeinMinePlugin.ModName}_VersionCheck", new Action<ZRpc, ZPackage>(RpcHandlers.RPC_Recycle_N_Reclaim_Version));
+
+            // Make calls to check versions
+            VeinMinePlugin.logger.LogInfo("Invoking version check");
+            ZPackage zpackage = new();
+            zpackage.Write(VeinMinePlugin.ModVersion);
+            zpackage.Write(RpcHandlers.ComputeHashForMod().Replace("-", ""));
+            peer.m_rpc.Invoke($"{VeinMinePlugin.ModName}_VersionCheck", zpackage);
+        }
+    }
+
+    [HarmonyPatch(typeof(ZNet), nameof(ZNet.RPC_PeerInfo))]
+    public static class VerifyClient
+    {
+        private static bool Prefix(ZRpc rpc, ZPackage pkg, ref ZNet __instance)
+        {
+            if (!__instance.IsServer() || RpcHandlers.ValidatedPeers.Contains(rpc)) return true;
+            // Disconnect peer if they didn't send mod version at all
+            VeinMinePlugin.logger.LogWarning($"Peer ({rpc.m_socket.GetHostName()}) never sent version or couldn't due to previous disconnect, disconnecting");
+            rpc.Invoke("Error", 3);
+            return false; // Prevent calling underlying method
+        }
+
+        private static void Postfix(ZNet __instance)
+        {
+            ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), $"{VeinMinePlugin.ModName}RequestAdminSync", new ZPackage());
+        }
+    }
+
+    [HarmonyPatch(typeof(FejdStartup), nameof(FejdStartup.ShowConnectError))]
+    public class ShowConnectionError
+    {
+        private static void Postfix(FejdStartup __instance)
+        {
+            if (__instance.m_connectionFailedPanel.activeSelf)
+            {
+                __instance.m_connectionFailedError.resizeTextMaxSize = 25;
+                __instance.m_connectionFailedError.resizeTextMinSize = 15;
+                __instance.m_connectionFailedError.text += $"\n{VeinMinePlugin.ConnectionError}";
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(ZNet), nameof(ZNet.Disconnect))]
+    public static class RemoveDisconnectedPeerFromVerified
+    {
+        private static void Prefix(ZNetPeer peer, ref ZNet __instance)
+        {
+            if (!__instance.IsServer()) return;
+            // Remove peer from validated list
+            VeinMinePlugin.logger.LogInfo($"Peer ({peer.m_rpc.m_socket.GetHostName()}) disconnected, removing from validated list");
+            _ = RpcHandlers.ValidatedPeers.Remove(peer.m_rpc);
+        }
+    }
+
+    public static class RpcHandlers
+    {
+        public static readonly List<ZRpc> ValidatedPeers = new();
+
+        public static void RPC_Recycle_N_Reclaim_Version(ZRpc rpc, ZPackage pkg)
+        {
+            string? version = pkg.ReadString();
+            string? hash = pkg.ReadString();
+
+            var hashForAssembly = ComputeHashForMod().Replace("-", "");
+
+            VeinMinePlugin.logger.LogInfo($"Hash/Version check, local: {VeinMinePlugin.ModVersion} {hashForAssembly} remote: {version} {hash}");
+            if (hash != hashForAssembly || version != VeinMinePlugin.ModVersion)
+            {
+                VeinMinePlugin.ConnectionError = $"{VeinMinePlugin.ModName} Installed: {VeinMinePlugin.ModVersion} {hashForAssembly}\n Needed: {version} {hash}";
+                if (!ZNet.instance.IsServer()) return;
+                // Different versions - force disconnect client from server
+                VeinMinePlugin.logger.LogWarning($"Peer ({rpc.m_socket.GetHostName()}) has incompatible version, disconnecting...");
+                rpc.Invoke("Error", 3);
+            }
+            else
+            {
+                if (!ZNet.instance.IsServer())
+                {
+                    // Enable mod on client if versions match
+                    VeinMinePlugin.logger.LogInfo("Received same version from server!");
+                }
+                else
+                {
+                    // Add client to validated list
+                    VeinMinePlugin.logger.LogInfo($"Adding peer ({rpc.m_socket.GetHostName()}) to validated list");
+                    ValidatedPeers.Add(rpc);
+                }
+            }
+        }
+
+        public static string ComputeHashForMod()
+        {
+            using SHA256 sha256Hash = SHA256.Create();
+            // ComputeHash - returns byte array  
+            byte[] bytes = sha256Hash.ComputeHash(File.ReadAllBytes(Assembly.GetExecutingAssembly().Location));
+            // Convert byte array to a string   
+            StringBuilder builder = new();
+            foreach (byte b in bytes)
+            {
+                builder.Append(b.ToString("X2"));
+            }
+
+            return builder.ToString();
+        }
+    }
+}

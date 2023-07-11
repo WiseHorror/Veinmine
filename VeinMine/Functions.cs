@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace WiseHorror.Veinmine
+namespace Veinmine
 {
     class Functions
     {
@@ -34,7 +34,7 @@ namespace WiseHorror.Veinmine
         {
             if (hit != null)
             {
-                if (VeinMine.spreadDamageType.Value == VeinMine.spreadTypes.level)
+                if (VeinMinePlugin.spreadDamageType.Value == VeinMinePlugin.SpreadTypes.Level)
                 {
                     float modifier = (float)GetSkillLevel(Player.GetClosestPlayer(hit.m_point, 5f).GetSkills(), Skills.SkillType.Pickaxes) * 0.01f;
                     hit.m_damage.m_pickaxe *= modifier;
