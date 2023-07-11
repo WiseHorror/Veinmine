@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 
@@ -9,69 +10,30 @@ namespace Veinmine
     {
         static bool Prefix(MineRock __instance, HitData hit)
         {
+            Player closestPlayer = Player.GetClosestPlayer(hit.m_point, 5f);
+
             if (VeinMinePlugin.veinMineKey.Value.IsKeyHeld())
             {
-                if (VeinMinePlugin.progressiveMode.Value == VeinMinePlugin.Toggle.On)
+                Vector3 firstHitPoint = hit.m_point;
+                foreach (var area in __instance.m_hitAreas)
                 {
-                    float radius = VeinMinePlugin.progressiveMult.Value * (float)Functions.GetSkillLevel(Player.GetClosestPlayer(hit.m_point, 5f).GetSkills(), Skills.SkillType.Pickaxes);
-                    Vector3 firstHitPoint = hit.m_point;
+                    if (area == null) continue;
 
-                    foreach (var area in __instance.m_hitAreas)
+                    if (VeinMinePlugin.progressiveMode.Value == VeinMinePlugin.Toggle.On)
                     {
-                        if (Functions.GetDistanceFromPlayer(Player.GetClosestPlayer(hit.m_point, 5f).GetTransform().position, area.bounds.center) <= radius && area != null)
+                        float radius = VeinMinePlugin.progressiveMult.Value * (float)Functions.GetSkillLevel(closestPlayer.GetSkills(), Skills.SkillType.Pickaxes);
+
+                        if (Functions.GetDistanceFromPlayer(closestPlayer.GetTransform().position, area.bounds.center) <= radius)
                         {
-                            hit.m_point = area.transform.position;
-                            hit.m_hitCollider = area;
-                            if (hit.m_hitCollider == null)
-                            {
-                                ZLog.Log("Minerock hit has no collider");
-                                return false;
-                            }
-
-                            int areaIndex = __instance.GetAreaIndex(hit.m_hitCollider);
-                            if (areaIndex == -1)
-                            {
-                                //ZLog.Log("Invalid hit area on " + base.gameObject.name);
-                                return false;
-                            }
-
-                            ZLog.Log("Hit mine rock area " + areaIndex);
-                            __instance.m_nview.InvokeRPC("Hit", new object[]
-                            {
-                                hit,
-                                areaIndex
-                            });
-                            hit.m_point = firstHitPoint;
+                            ProcessHitArea(__instance, hit, area, firstHitPoint);
                         }
                     }
-                }
-                else
-                {
-                    foreach (var area in __instance.m_hitAreas)
+                    else
                     {
-                        string hpAreaName = "Health" + __instance.GetAreaIndex(area).ToString();
+                        string hpAreaName = $"Health{__instance.GetAreaIndex(area)}";
                         hit.m_damage.m_pickaxe = __instance.m_nview.GetZDO().GetFloat(hpAreaName, __instance.m_health);
-                        hit.m_point = __instance.GetHitArea(__instance.GetAreaIndex(area)).bounds.center;
-                        hit.m_hitCollider = area;
-                        if (hit.m_hitCollider == null)
-                        {
-                            ZLog.Log("Minerock hit has no collider");
-                            return false;
-                        }
-
-                        int areaIndex = __instance.GetAreaIndex(hit.m_hitCollider);
-                        if (areaIndex == -1)
-                        {
-                            //ZLog.Log("Invalid hit area on " + base.gameObject.name);
-                            return false;
-                        }
-
-                        ZLog.Log("Hit mine rock area " + areaIndex);
-                        __instance.m_nview.InvokeRPC("Hit", new object[]
-                        {
-                            hit,
-                            areaIndex
-                        });
+                        hit.m_point = area.bounds.center;
+                        ProcessHitArea(__instance, hit, area, firstHitPoint);
                     }
                 }
 
@@ -80,7 +42,25 @@ namespace Veinmine
 
             return true;
         }
+
+        private static void ProcessHitArea(MineRock __instance, HitData hit, Collider area, Vector3 firstHitPoint)
+        {
+            hit.m_hitCollider = area;
+            if (hit.m_hitCollider == null)
+            {
+                VeinMinePlugin.logger.LogInfo("Minerock hit has no collider");
+                return;
+            }
+
+            int areaIndex = __instance.GetAreaIndex(hit.m_hitCollider);
+            if (areaIndex == -1) return;
+
+            VeinMinePlugin.logger.LogInfo($"Hit mine rock area {areaIndex}");
+            __instance.m_nview.InvokeRPC("Hit", hit, areaIndex);
+            hit.m_point = firstHitPoint;
+        }
     }
+
 
     [HarmonyPatch(typeof(MineRock5), nameof(MineRock5.Damage))]
     static class MineRock5DamagePatch
@@ -90,66 +70,50 @@ namespace Veinmine
             __instance.SetupColliders();
             __state = new Dictionary<int, Vector3>();
 
-            if (VeinMinePlugin.veinMineKey.Value.IsKeyHeld() && VeinMinePlugin.progressiveMode.Value == VeinMinePlugin.Toggle.On)
+            Player closestPlayer = Player.GetClosestPlayer(hit.m_point, 5f);
+            float radius = VeinMinePlugin.progressiveMult.Value * (float)Functions.GetSkillLevel(closestPlayer.GetSkills(), Skills.SkillType.Pickaxes);
+
+            if (VeinMinePlugin.veinMineKey.Value.IsKeyHeld())
             {
-                var radiusColliders = Physics.OverlapSphere(hit.m_point, VeinMinePlugin.progressiveMult.Value * (float)Functions.GetSkillLevel(Player.GetClosestPlayer(hit.m_point, 5f).GetSkills(), Skills.SkillType.Pickaxes));
+                IEnumerable<Collider> radiusColliders;
 
-                if (radiusColliders != null)
+                if (VeinMinePlugin.progressiveMode.Value == VeinMinePlugin.Toggle.On)
+                    radiusColliders = Physics.OverlapSphere(hit.m_point, radius);
+                else
+                    radiusColliders = __instance.m_hitAreas.Select(area => area.m_collider);
+
+                foreach (var area in radiusColliders)
                 {
-                    foreach (var area in radiusColliders)
+                    int areaIndex = __instance.GetAreaIndex(area);
+                    if (areaIndex >= 0)
                     {
-                        if (__instance.GetAreaIndex(area) >= 0)
-                        {
-                            __state.Add(__instance.GetAreaIndex(area), __instance.GetHitArea(__instance.GetAreaIndex(area)).m_bound.m_pos +
-                                                                       __instance.GetHitArea(__instance.GetAreaIndex(area)).m_collider.transform.position);
-                        }
-                    }
-                }
-            }
-
-            if (VeinMinePlugin.veinMineKey.Value.IsKeyHeld() && VeinMinePlugin.progressiveMode.Value == VeinMinePlugin.Toggle.Off)
-            {
-                List<Collider> radiusColliders = new List<Collider>();
-                foreach (var area in __instance.m_hitAreas)
-                {
-                    radiusColliders.Add(area.m_collider);
-                }
-
-                if (radiusColliders != null)
-                {
-                    foreach (var area in radiusColliders)
-                    {
-                        if (__instance.GetAreaIndex(area) >= 0)
-                        {
-                            __state.Add(__instance.GetAreaIndex(area), __instance.GetHitArea(__instance.GetAreaIndex(area)).m_bound.m_pos +
-                                                                       __instance.GetHitArea(__instance.GetAreaIndex(area)).m_collider.transform.position);
-                        }
+                        __state.Add(areaIndex,
+                            __instance.GetHitArea(areaIndex).m_bound.m_pos +
+                            __instance.GetHitArea(areaIndex).m_collider.transform.position);
                     }
                 }
             }
         }
 
-        public static void Postfix(MineRock5 __instance, ZNetView ___m_nview, List<HitArea> ___m_hitAreas, HitData hit, Dictionary<int, Vector3> __state)
+        public static void Postfix(MineRock5 __instance, ZNetView ___m_nview, HitData hit, Dictionary<int, Vector3> __state)
         {
-            if (Player.GetClosestPlayer(hit.m_point, 5f) != null && hit.m_attacker == Player.GetClosestPlayer(hit.m_point, 5f).GetZDOID())
+            Player closestPlayer = Player.GetClosestPlayer(hit.m_point, 5f);
+            if (closestPlayer != null && hit.m_attacker == closestPlayer.GetZDOID() && VeinMinePlugin.veinMineKey.Value.IsKeyHeld())
             {
-                if (VeinMinePlugin.veinMineKey.Value.IsKeyHeld() && Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon().GetDamage().m_pickaxe > 0)
+                var currentWeapon = closestPlayer.GetCurrentWeapon();
+                if (currentWeapon.GetDamage().m_pickaxe > 0)
                 {
                     foreach (var index in __state)
                     {
-                        if (Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon().m_durability > 0 || !Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon().m_shared.m_useDurability)
+                        if (currentWeapon.m_durability > 0 || !currentWeapon.m_shared.m_useDurability)
                         {
                             try
                             {
-                                ___m_nview.InvokeRPC("Damage", new object[]
-                                {
-                                    hit,
-                                    index.Key
-                                });
+                                ___m_nview.InvokeRPC("Damage", hit, index.Key);
                             }
                             catch
                             {
-                                VeinMinePlugin.logger.LogInfo("Skipping section: " + index.Key + ".");
+                                VeinMinePlugin.logger.LogInfo($"Skipping section: {index.Key}.");
                             }
                         }
                     }
@@ -158,35 +122,44 @@ namespace Veinmine
         }
     }
 
+
     [HarmonyPatch(typeof(MineRock5), nameof(MineRock5.DamageArea))]
     static class MineRock5DamageAreaPatch
     {
         static bool Prefix(MineRock5 __instance, HitData hit, int hitAreaIndex, ref EffectList ___m_destroyedEffect, ref EffectList ___m_hitEffect, out float __state, ref bool __result)
         {
-            if (
-                hit == null
-                || Player.GetClosestPlayer(hit.m_point, 5f) == null
-                || Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon() == null
-            )
+            Player closestPlayer2 = Player.GetClosestPlayer(hit.m_point, 5f);
+            ItemDrop.ItemData? currentWeapon = closestPlayer2?.GetCurrentWeapon();
+
+            if (hit == null || closestPlayer2 == null || currentWeapon == null)
             {
-                __result = false;
                 __state = 0f;
+                __result = false;
                 return false;
             }
 
-            if (VeinMinePlugin.progressiveMode.Value == VeinMinePlugin.Toggle.Off && Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon().GetDamage().m_pickaxe > 0f) hit.m_damage.m_pickaxe = __instance.m_health;
-            bool isVeinmined = false;
+            if (VeinMinePlugin.progressiveMode.Value == VeinMinePlugin.Toggle.Off && currentWeapon.GetDamage().m_pickaxe > 0f) hit.m_damage.m_pickaxe = __instance.m_health;
+
             MineRock5.HitArea hitArea = __instance.GetHitArea(hitAreaIndex);
+            if (hitArea == null)
+            {
+                VeinMinePlugin.logger.LogInfo($"Missing hit area {hitAreaIndex}");
+                __state = 0f;
+                __result = false;
+                return false;
+            }
+
             __state = hitArea.m_health;
             Vector3 hitPoint = hitArea.m_collider.bounds.center;
 
             if (VeinMinePlugin.enableSpreadDamage.Value == VeinMinePlugin.Toggle.On) hit = Functions.SpreadDamage(hit);
-            if (VeinMinePlugin.veinMineKey.Value.IsKeyHeld()) isVeinmined = true;
 
-            ZLog.Log("hit mine rock " + hitAreaIndex);
+            bool isVeinmined = VeinMinePlugin.veinMineKey.Value.IsKeyHeld();
+            VeinMinePlugin.logger.LogInfo($"Hit mine rock {hitAreaIndex}");
+
             if (hitArea == null)
             {
-                ZLog.Log("Missing hit area " + hitAreaIndex);
+                VeinMinePlugin.logger.LogInfo($"Missing hit area {hitAreaIndex}");
                 __result = false;
                 return false;
             }
@@ -194,7 +167,7 @@ namespace Veinmine
             __instance.LoadHealth();
             if (hitArea.m_health <= 0f)
             {
-                ZLog.Log("Already destroyed");
+                VeinMinePlugin.logger.LogInfo("Already destroyed");
                 __result = false;
                 return false;
             }
@@ -264,32 +237,32 @@ namespace Veinmine
 
         static void Postfix(MineRock5 __instance, HitData hit, float __state, bool __result)
         {
-            if (
-                hit != null
-                && Player.GetClosestPlayer(hit.m_point, 5f) != null
-                && Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon() != null
-            )
+            Player closestPlayer = Player.GetClosestPlayer(hit.m_point, 5f);
+            ItemDrop.ItemData? currentWeapon = closestPlayer?.GetCurrentWeapon();
+
+            if (hit != null && closestPlayer != null && currentWeapon != null && VeinMinePlugin.veinMineKey.Value.IsKeyHeld() && currentWeapon.GetDamage().m_pickaxe > 0)
             {
-                if (VeinMinePlugin.veinMineKey.Value.IsKeyHeld() && Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon().GetDamage().m_pickaxe > 0)
+                if (__state > 0f && hit.m_attacker == closestPlayer.GetZDOID())
                 {
-                    if (__state > 0f && hit.m_attacker == Player.GetClosestPlayer(hit.m_point, 5f).GetZDOID() && VeinMinePlugin.progressiveMode.Value == VeinMinePlugin.Toggle.Off)
-                    {
-                        Player.GetClosestPlayer(hit.m_point, 5f).RaiseSkill(Skills.SkillType.Pickaxes, Functions.GetSkillIncreaseStep(Player.GetClosestPlayer(hit.m_point, 5f).GetSkills(), Skills.SkillType.Pickaxes));
+                    var skills = closestPlayer.GetSkills();
+                    float skillIncreaseStep = Functions.GetSkillIncreaseStep(skills, Skills.SkillType.Pickaxes);
 
-                        if (VeinMinePlugin.veinMineDurability.Value == VeinMinePlugin.Toggle.On && Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon().m_shared.m_useDurability)
-                        {
-                            Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon().m_durability -= Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon().m_shared.m_useDurabilityDrain;
-                        }
+                    if (VeinMinePlugin.progressiveMode.Value == VeinMinePlugin.Toggle.Off)
+                    {
+                        closestPlayer.RaiseSkill(Skills.SkillType.Pickaxes, skillIncreaseStep);
                     }
-                    else if (__state > 0f && hit.m_attacker == Player.GetClosestPlayer(hit.m_point, 5f).GetZDOID() && VeinMinePlugin.progressiveMode.Value == VeinMinePlugin.Toggle.On)
+                    else // VeinMinePlugin.progressiveMode.Value == VeinMinePlugin.Toggle.On
                     {
-                        Player.GetClosestPlayer(hit.m_point, 5f).RaiseSkill(Skills.SkillType.Pickaxes, Functions.GetSkillIncreaseStep(Player.GetClosestPlayer(hit.m_point, 5f).GetSkills(), Skills.SkillType.Pickaxes) * VeinMinePlugin.xpMult.Value);
+                        closestPlayer.RaiseSkill(Skills.SkillType.Pickaxes, skillIncreaseStep * VeinMinePlugin.xpMult.Value);
+                    }
 
-                        if (VeinMinePlugin.veinMineDurability.Value == VeinMinePlugin.Toggle.On && Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon().m_shared.m_useDurability)
-                        {
-                            float durabilityLoss = Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon().m_shared.m_useDurabilityDrain * ((120 - Functions.GetSkillLevel(Player.GetClosestPlayer(hit.m_point, 5f).GetSkills(), Skills.SkillType.Pickaxes)) / (20 * VeinMinePlugin.durabilityMult.Value));
-                            Player.GetClosestPlayer(hit.m_point, 5f).GetCurrentWeapon().m_durability -= durabilityLoss;
-                        }
+                    if (VeinMinePlugin.veinMineDurability.Value == VeinMinePlugin.Toggle.On && currentWeapon.m_shared.m_useDurability)
+                    {
+                        float durabilityLoss = VeinMinePlugin.progressiveMode.Value == VeinMinePlugin.Toggle.On
+                            ? currentWeapon.m_shared.m_useDurabilityDrain * ((120 - Functions.GetSkillLevel(skills, Skills.SkillType.Pickaxes)) / (20 * VeinMinePlugin.durabilityMult.Value))
+                            : currentWeapon.m_shared.m_useDurabilityDrain;
+
+                        currentWeapon.m_durability -= durabilityLoss;
                     }
                 }
             }

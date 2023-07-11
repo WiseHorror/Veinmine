@@ -9,7 +9,7 @@ using Veinmine;
 [assembly: AssemblyTitle(VeinMinePlugin.ModName)]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany(VeinMinePlugin.Author + " & Azumatt")]
+[assembly: AssemblyCompany($"{VeinMinePlugin.Author} & Azumatt")]
 [assembly: AssemblyProduct(VeinMinePlugin.ModName)]
 [assembly: AssemblyCopyright("Copyright © WiseHorror/Azumatt  2023")]
 [assembly: AssemblyTrademark("")]

@@ -53,7 +53,7 @@ namespace Veinmine
             {
                 __instance.m_connectionFailedError.resizeTextMaxSize = 25;
                 __instance.m_connectionFailedError.resizeTextMinSize = 15;
-                __instance.m_connectionFailedError.text += "\n" + VeinMinePlugin.ConnectionError;
+                __instance.m_connectionFailedError.text += $"\n{VeinMinePlugin.ConnectionError}";
             }
         }
     }

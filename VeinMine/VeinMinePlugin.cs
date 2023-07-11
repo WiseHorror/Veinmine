@@ -13,15 +13,13 @@ using UnityEngine;
 namespace Veinmine
 {
     [BepInPlugin(ModGUID, ModName, ModVersion)]
-    [BepInProcess("valheim.exe")]
-    [BepInProcess("valheim_server.exe")]
     public class VeinMinePlugin : BaseUnityPlugin
     {
         internal const string ModName = "Veinmine";
-        internal const string ModVersion = "1.2.7";
+        internal const string ModVersion = "1.2.8";
         internal const string Author = "wisehorror";
-        private const string ModGUID = "com." + Author + "." + ModName;
-        private static string ConfigFileName = ModGUID + ".cfg";
+        private const string ModGUID = $"com.{Author}.{ModName}";
+        private static string ConfigFileName = $"{ModGUID}.cfg";
         private static string ConfigFileFullPath = Paths.ConfigPath + Path.DirectorySeparatorChar + ConfigFileName;
         internal static string ConnectionError = "";
         private readonly Harmony _harmony = new(ModGUID);
@@ -43,7 +41,9 @@ namespace Veinmine
 
         void Awake()
         {
-            _serverConfigLocked = config("1 - General", "Lock Configuration", Toggle.On,
+            _serverConfigLocked = config("1 - General",
+                "Lock Configuration",
+                Toggle.On,
                 "If on, the configuration is locked and can be changed by server admins only.");
             _ = ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
 
@@ -136,15 +136,15 @@ namespace Veinmine
         #region ConfigOptions
 
         private static ConfigEntry<Toggle> _serverConfigLocked = null!;
-        public static ConfigEntry<KeyboardShortcut> veinMineKey;
-        public static ConfigEntry<Toggle> veinMineDurability;
-        public static ConfigEntry<Toggle> removeEffects;
-        public static ConfigEntry<Toggle> progressiveMode;
-        public static ConfigEntry<Toggle> enableSpreadDamage;
-        public static ConfigEntry<SpreadTypes> spreadDamageType;
-        public static ConfigEntry<float> progressiveMult;
-        public static ConfigEntry<float> durabilityMult;
-        public static ConfigEntry<float> xpMult;
+        public static ConfigEntry<KeyboardShortcut> veinMineKey = null!;
+        public static ConfigEntry<Toggle> veinMineDurability = null!;
+        public static ConfigEntry<Toggle> removeEffects = null!;
+        public static ConfigEntry<Toggle> progressiveMode = null!;
+        public static ConfigEntry<Toggle> enableSpreadDamage = null!;
+        public static ConfigEntry<SpreadTypes> spreadDamageType = null!;
+        public static ConfigEntry<float> progressiveMult = null!;
+        public static ConfigEntry<float> durabilityMult = null!;
+        public static ConfigEntry<float> xpMult = null!;
 
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
             bool synchronizedSetting = true)
@@ -171,10 +171,10 @@ namespace Veinmine
 
         private class ConfigurationManagerAttributes
         {
-            [UsedImplicitly] public int? Order;
-            [UsedImplicitly] public bool? Browsable;
-            [UsedImplicitly] public string? Category;
-            [UsedImplicitly] public Action<ConfigEntryBase>? CustomDrawer;
+            [UsedImplicitly] public int? Order = null!;
+            [UsedImplicitly] public bool? Browsable = null!;
+            [UsedImplicitly] public string Category = null!;
+            [UsedImplicitly] public Action<ConfigEntryBase> CustomDrawer = null!;
         }
 
         class AcceptableShortcuts : AcceptableValueBase
@@ -187,7 +187,7 @@ namespace Veinmine
             public override bool IsValid(object value) => true;
 
             public override string ToDescriptionString() =>
-                "# Acceptable values: " + string.Join(", ", KeyboardShortcut.AllKeyCodes);
+                $"# Acceptable values: {string.Join(", ", UnityInput.Current.SupportedKeyCodes)}";
         }
 
         #endregion
