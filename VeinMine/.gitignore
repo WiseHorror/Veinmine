@@ -1,1 +1,8 @@
-libs/
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+VeinMine.sln.DotSettings.user
+.idea
+.vs
